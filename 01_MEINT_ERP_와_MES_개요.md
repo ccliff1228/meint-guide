@@ -45,7 +45,21 @@ flowchart LR
 | **본질** | 수동 입력(Human-driven) 데이터 기반 | 설비(Machine-driven) 데이터 기반 |
 | **관리 단위** | 일/주 단위 계획·실적 집계 | 초/분 단위 실시간 제어 |
 | **핵심 질문** | "무엇을 얼마나 만들어라" | "지금 이 설비에서 무슨 일이 일어나는가" |
-| **ISA-95 위치** | Level 4 (Business Planning) | Level 3 (Manufacturing Operations) |
+| **ISA-95 레벨** | Level 4 (Business Planning) | Level 3 (Manufacturing Operations) |
+
+### ISA-95 레벨 개요
+
+ISA-95(IEC 62264)는 제조 기업의 시스템을 5개 계층으로 구분하는 국제 표준이다.
+
+```
+Level 4 ─ Business Planning & Logistics (ERP)     ← 경영 계획·자원 관리
+Level 3 ─ Manufacturing Operations (MES)           ← 생산 실행·공정 관리
+Level 2 ─ Monitoring & Control (SCADA / DCS)       ← 설비 감시·제어
+Level 1 ─ Sensing & Manipulation (PLC / Sensor)    ← 신호 수집·구동
+Level 0 ─ Physical Process                         ← 실제 생산 공정
+```
+
+ERP(Level 4)는 **무엇을 만들지** 계획하고, MES(Level 3)는 **어떻게 만들고 있는지** 실시간으로 관리한다. Level 0~2는 물리적 설비와 제어 장치 계층으로, MES가 이 계층의 데이터를 수집하여 상위로 전달하는 역할을 한다.
 
 ---
 
