@@ -42,7 +42,20 @@
 
 ## 2. Claude Code 설치 및 사용
 
-선물로 Pro 이상 플랜이 활성화되면 Claude Code를 바로 사용할 수 있다.
+선물로 Pro 이상 플랜이 활성화되면 Claude Code를 바로 사용할 수 있다. 상세한 설치 방법은 `08_MEINT_Claude_Code_설치_및_사용법.md`를 참조하고, 여기서는 빠른 시작 절차만 안내한다.
+
+### 사전 준비: Git for Windows 설치 (Windows만 해당)
+
+Windows에는 Git이 기본 설치되어 있지 않다. Claude Code는 내부적으로 `git`과 `bash`를 사용하므로, 먼저 Git for Windows를 설치해야 한다.
+
+1. [git-scm.com](https://git-scm.com) 에서 다운로드 및 설치
+2. 설치 완료 후 PowerShell에서 확인:
+
+```powershell
+git --version
+```
+
+버전이 출력되면 정상 설치된 것이다. Git for Windows가 제공하는 Git Bash가 Claude Code의 내부 셸 환경으로 사용된다.
 
 ### Step 1: Claude Code 설치
 
@@ -52,29 +65,46 @@
 irm https://claude.ai/install.ps1 | iex
 ```
 
+> 반드시 **PowerShell**에서 실행해야 한다. CMD(명령 프롬프트)에서는 `irm` 명령이 동작하지 않는다.
+
 **macOS / Linux:**
 
 ```bash
-curl https://claude.ai/install.sh | bash
+curl -fsSL https://claude.ai/install.sh | bash
 ```
 
-### Step 2: 로그인
+### Step 2: 설치 확인
 
-터미널에서 다음 명령 실행:
+새 PowerShell 창을 열고 다음 명령을 실행한다.
 
-```bash
-claude login
+```powershell
+claude --version
 ```
 
-브라우저가 열리면 Claude.ai 계정으로 로그인한다. 선물 구독이 활성화된 동일 계정으로 로그인해야 한다.
+버전 번호가 출력되면 설치가 완료된 것이다.
 
-### Step 3: 사용 시작
+### Step 3: 로그인
 
-```bash
+PowerShell에서 다음 명령을 실행한다.
+
+```powershell
 claude
 ```
 
-프로젝트 디렉토리에서 위 명령을 실행하면 Claude Code가 시작된다.
+브라우저가 자동으로 열리면 Claude.ai 계정으로 로그인한다. 선물 구독이 활성화된 동일 계정으로 로그인해야 한다.
+
+> 브라우저가 자동으로 열리지 않으면 `c` 키를 눌러 인증 URL을 복사한 뒤, 브라우저에 직접 붙여넣는다.
+
+### Step 4: 사용 시작
+
+PowerShell에서 프로젝트 디렉토리로 이동한 뒤 실행:
+
+```powershell
+cd my-project
+claude
+```
+
+Claude Code가 시작되면 내부 셸은 자동으로 **bash**(Git Bash)로 전환된다. 이후 Claude Code 안에서의 명령은 bash 문법을 따른다.
 
 ---
 
