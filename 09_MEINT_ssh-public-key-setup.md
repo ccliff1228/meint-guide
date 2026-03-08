@@ -4,7 +4,7 @@
 
 비밀번호 대신 SSH 공개키(ed25519)를 사용하여 원격 서버에 로그인하는 방법을 단계별로 안내한다. 비밀번호 접속 확인부터 키 생성, 서버 등록, 접속 편의 설정, 비밀번호 로그인 비활성화까지 전체 과정을 다룬다.
 
-각 단계에서 **PowerShell**(내 PC)과 **Linux**(서버)에서 실행하는 작업을 구분하여 표시한다.
+각 단계에서 **PowerShell**(Windows PC)과 **Linux**(서버)에서 실행하는 작업을 구분하여 표시한다.
 
 ## 목차
 
@@ -28,7 +28,7 @@
 
 ## 1단계: 비밀번호 로그인 확인
 
-> **실행 환경: PowerShell (내 PC)**
+> **실행 환경: PowerShell (Windows PC)**
 
 공개키를 등록하기 전에, 먼저 아이디/비밀번호로 서버에 접속되는지 확인한다.
 
@@ -51,9 +51,9 @@ ssh -p 4922 meint01@223.195.110.31
 
 ## 2단계: SSH 키 생성
 
-> **실행 환경: PowerShell (내 PC)**
+> **실행 환경: PowerShell (Windows PC)**
 
-각 사용자가 **자신의 PC**에서 실행한다.
+각 사용자가 **자신의 Windows PC**에서 실행한다.
 
 ```powershell
 ssh-keygen -t ed25519 -C "meint01@mypc"
@@ -78,7 +78,7 @@ Windows에는 `ssh-copy-id`가 없으므로 수동으로 등록한다.
 
 ### 3-1. 공개키 내용 확인
 
-> **실행 환경: PowerShell (내 PC)**
+> **실행 환경: PowerShell (Windows PC)**
 
 ```powershell
 cat ~/.ssh/id_ed25519.pub
@@ -109,7 +109,7 @@ exit
 
 ## 4단계: 공개키 로그인 확인
 
-> **실행 환경: PowerShell (내 PC)**
+> **실행 환경: PowerShell (Windows PC)**
 
 ```powershell
 ssh -p 4922 meint01@223.195.110.31
@@ -124,16 +124,16 @@ ssh -v -p 4922 meint01@223.195.110.31
 ```
 
 - **`Offering public key` 후 `rejected`**: 서버의 `authorized_keys`에 공개키가 제대로 등록되지 않음
-- **공개키 시도 자체가 없음**: 클라이언트에 `~/.ssh/id_ed25519` 파일이 없거나 경로가 다름
+- **공개키 시도 자체가 없음**: Windows PC에 `~/.ssh/id_ed25519` 파일이 없거나 경로가 다름
 - **서버 권한 문제**: 서버에서 `chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys` 실행
 
 ---
 
 ## 5단계: SSH 접속 편의 설정 (선택)
 
-> **실행 환경: PowerShell (내 PC)**
+> **실행 환경: PowerShell (Windows PC)**
 
-클라이언트의 `~/.ssh/config` 파일에 아래 내용을 추가하면 간단하게 접속할 수 있다:
+Windows PC의 `~/.ssh/config` 파일에 아래 내용을 추가하면 간단하게 접속할 수 있다:
 
 ```
 Host meint
