@@ -4,6 +4,19 @@
 
 GitHub Private Repository에 팀원을 초대하고, 브랜치 보호 규칙으로 코드 품질을 관리하는 방법을 정리한다. 소유자(Owner)와 팀원(Collaborator)의 역할별로 구분하여 안내한다.
 
+## 목차
+
+- [Part 1. 소유자 (Owner)](#part-1-소유자-owner)
+  - [1-1. 팀원 초대](#1-1-팀원-초대)
+  - [1-2. 브랜치 보호 규칙 설정](#1-2-브랜치-보호-규칙-설정)
+  - [1-3. Bypass List 추가 (소유자 우회 설정)](#1-3-bypass-list-추가-소유자-우회-설정)
+- [Part 2. 팀원 (Collaborator)](#part-2-팀원-collaborator)
+  - [2-1. 사전 준비](#2-1-사전-준비)
+  - [2-2. Personal Access Token(PAT) 생성](#2-2-personal-access-tokenpat-생성)
+  - [2-3. Repository Clone](#2-3-repository-clone)
+  - [2-4. 작업 흐름](#2-4-작업-흐름)
+- [참고](#참고)
+
 ---
 
 ## Part 1. 소유자 (Owner)

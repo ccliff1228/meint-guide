@@ -2,7 +2,20 @@
 
 ## 개요
 
-하나의 Ubuntu 계정(예: `meint0x`)을 여러 팀원이 공유하면서, Claude Code는 각자의 Anthropic 계정으로 인증하는 구성 가이드이다.
+하나의 Ubuntu 계정(예: `meint0x`)을 여러 팀원이 공유하면서, Claude Code는 각자의 Anthropic 계정으로 인증하는 구성 가이드이다. `CLAUDE_CONFIG_DIR` 환경변수를 활용하여 팀원별 설정 디렉터리를 분리하고, SSH 공개키 기반으로 접속 시 자동 적용하는 방식을 제공한다.
+
+## 목차
+
+- [문제: 인증 충돌](#문제-인증-충돌)
+- [해결: 환경변수로 Claude 설정 디렉터리 분리](#해결-환경변수로-claude-설정-디렉터리-분리)
+  - [1단계: 팀원별 디렉터리 생성](#1단계-팀원별-디렉터리-생성)
+  - [2단계: 팀원별 쉘 프로파일 스크립트 작성](#2단계-팀원별-쉘-프로파일-스크립트-작성)
+  - [3단계: SSH 접속 시 자동 적용 (authorized_keys 활용)](#3단계-ssh-접속-시-자동-적용-authorized_keys-활용)
+  - [4단계: 각 팀원 최초 로그인](#4단계-각-팀원-최초-로그인)
+  - [분리 범위: 무엇이 격리되고, 무엇이 공유되는가](#분리-범위-무엇이-격리되고-무엇이-공유되는가)
+- [보안 고려사항](#보안-고려사항)
+- [부록 A: cat + heredoc 구문 설명](#부록-a-cat--heredoc-구문-설명)
+
 
 ## 문제: 인증 충돌
 
@@ -45,11 +58,9 @@ EOF
 
 각 팀원에 대해 동일하게 생성한다. 이 구문의 상세 설명은 [부록 A: cat + heredoc 구문 설명](#부록-a-cat--heredoc-구문-설명)을 참고한다.
 
-### 3단계: 접속 시 프로파일 선택
+### 3단계: SSH 접속 시 자동 적용 (authorized_keys 활용)
 
-#### 방법 A: SSH 접속 시 자동 적용 (authorized_keys 활용)
-
-> **이 방법은 SSH 공개키 인증에서만 동작한다.** `authorized_keys`의 `environment=` 옵션은 공개키 매칭 시 적용되는 메커니즘이므로, 아이디/비밀번호 인증으로는 사용할 수 없다. 비밀번호 인증은 공유 계정에서 모든 팀원이 동일한 username + password를 사용하므로, 서버가 누가 접속했는지 구분할 수 없기 때문이다. 비밀번호 인증 환경에서는 아래 방법 B(수동 선택)를 사용한다.
+> **이 방법은 SSH 공개키 인증에서만 동작한다.** `authorized_keys`의 `environment=` 옵션은 공개키 매칭 시 적용되는 메커니즘이므로, 아이디/비밀번호 인증으로는 사용할 수 없다.
 
 각 팀원의 SSH 공개키에 환경변수를 지정한다.
 
@@ -86,75 +97,15 @@ sudo sed -i 's/^#*PermitUserEnvironment.*/PermitUserEnvironment yes/' /etc/ssh/s
 sudo systemctl restart sshd
 ```
 
-방법 A만으로 `CLAUDE_CONFIG_DIR`이 자동 설정되므로, 아래 방법 B의 `claude-profile()` 함수 없이도 Claude Code는 올바른 설정 디렉터리를 사용한다. 방법 B는 SSH 자동 적용이 안 되는 상황(로컬 접속, 수동 전환 등)을 위한 폴백이다.
-
-#### 방법 B: 접속 후 수동 선택 (선택사항)
-
-`~/.bashrc` 맨 아래에 다음 스크립트를 추가한다. 이 스크립트의 상세 동작은 [부록 B: claude-profile 스크립트 상세 설명](#부록-b-claude-profile-스크립트-상세-설명)을 참고한다.
-
-```bash
-# === Claude Code 팀 프로파일 시스템 ===
-CLAUDE_PROFILES_DIR="$HOME/.claude-profiles"
-
-claude-profile() {
-    local name="$1"
-    if [ -z "$name" ]; then
-        echo "=== Claude Code 프로파일 ==="
-        echo "현재: ${CLAUDE_PROFILE:-미설정}"
-        echo "사용 가능:"
-        ls -1 "$CLAUDE_PROFILES_DIR" 2>/dev/null | sed 's/^/  - /'
-        echo ""
-        echo "사용법: claude-profile <이름>"
-        return 0
-    fi
-
-    mkdir -p "$CLAUDE_PROFILES_DIR/$name/.claude"
-
-    export CLAUDE_CONFIG_DIR="$CLAUDE_PROFILES_DIR/$name/.claude"
-    export CLAUDE_PROFILE="$name"
-
-    # 프롬프트에 프로파일 표시
-    export PS1="(\$CLAUDE_PROFILE) ${BASE_PS1:-$PS1}"
-
-    echo "Claude 프로파일 활성화: $name"
-}
-
-# 기본 PS1 저장
-BASE_PS1="$PS1"
-
-# SSH 키 기반 자동 감지 (authorized_keys에서 CLAUDE_CONFIG_DIR 설정 시)
-if [ -n "$CLAUDE_CONFIG_DIR" ]; then
-    CLAUDE_PROFILE=$(basename $(dirname "$CLAUDE_CONFIG_DIR"))
-    echo "자동 감지된 Claude 프로파일: $CLAUDE_PROFILE"
-fi
-```
-
-사용:
-
-```bash
-ssh meint0x@server
-claude-profile alice    # 내 프로파일 활성화
-claude                  # Claude Code 실행 -> alice의 인증 사용
-```
-
-> **주의:** 프로필은 반드시 **Claude Code를 시작하기 전에** 적용해야 한다. Claude Code가 이미 실행 중인 상태에서는 환경변수를 변경해도 반영되지 않는다. `env.sh`를 직접 사용하는 경우도 동일하다:
->
-> ```bash
-> source ~/.claude-profiles/alice/env.sh
-> claude
-> ```
->
-> 또는 한 줄로:
->
-> ```bash
-> CLAUDE_CONFIG_DIR="$HOME/.claude-profiles/alice/.claude" claude
-> ```
+이 설정만으로 `CLAUDE_CONFIG_DIR`이 자동 설정되므로, Claude Code는 접속한 팀원에 맞는 설정 디렉터리를 자동으로 사용한다.
 
 ### 4단계: 각 팀원 최초 로그인
 
+SSH 공개키로 서버에 접속하면 `CLAUDE_CONFIG_DIR`이 자동 설정된다. 최초 실행 시 로그인 프롬프트가 나타나며, 각자의 Anthropic 계정으로 인증한다.
+
 ```bash
-claude-profile alice
-claude   # 최초 실행 시 로그인 프롬프트 -> 자기 계정으로 인증
+ssh meint0x@server       # authorized_keys에 의해 CLAUDE_CONFIG_DIR 자동 설정
+claude                   # 최초 실행 시 로그인 프롬프트 -> 자기 계정으로 인증
 ```
 
 ### 분리 범위: 무엇이 격리되고, 무엇이 공유되는가
@@ -257,92 +208,3 @@ EOF
 
 이 파일은 `source ~/.claude-profiles/alice/env.sh`로 실행하여 환경변수를 현재 쉘에 적용한다.
 
----
-
-## 부록 B: claude-profile 스크립트 상세 설명
-
-### 프로파일 기본 경로
-
-```bash
-CLAUDE_PROFILES_DIR="$HOME/.claude-profiles"
-```
-
-모든 팀원의 프로파일이 저장되는 루트 디렉터리를 변수로 지정한다.
-
-### `claude-profile` 함수
-
-**인자 없이 호출 시 — 상태 조회:**
-
-```bash
-local name="$1"
-if [ -z "$name" ]; then
-```
-
-- `$1`: 첫 번째 인자 (팀원 이름)
-- `-z "$name"`: 인자가 비어있으면 참
-
-```bash
-echo "현재: ${CLAUDE_PROFILE:-미설정}"
-```
-
-- `${변수:-기본값}`: `CLAUDE_PROFILE`이 미설정이면 `"미설정"` 출력
-
-```bash
-ls -1 "$CLAUDE_PROFILES_DIR" 2>/dev/null | sed 's/^/  - /'
-```
-
-- `ls -1`: 한 줄에 하나씩 디렉터리 목록 출력
-- `2>/dev/null`: 디렉터리가 없을 때 에러 숨김
-- `sed 's/^/  - /'`: 각 줄 앞에 `  - ` 접두어 추가 (목록 형태)
-
-**인자 있을 때 — 프로파일 활성화:**
-
-```bash
-mkdir -p "$CLAUDE_PROFILES_DIR/$name/.claude"
-```
-
-프로파일 디렉터리가 없으면 자동 생성한다. `-p`는 중간 경로까지 한번에 생성.
-
-```bash
-export CLAUDE_CONFIG_DIR="$CLAUDE_PROFILES_DIR/$name/.claude"
-export CLAUDE_PROFILE="$name"
-```
-
-- `CLAUDE_CONFIG_DIR`: Claude Code가 인증/설정을 읽는 경로를 해당 팀원 전용으로 변경
-- `CLAUDE_PROFILE`: 현재 활성 프로파일 이름 저장 (프롬프트 표시용)
-
-```bash
-export PS1="(\$CLAUDE_PROFILE) ${BASE_PS1:-$PS1}"
-```
-
-- `\$CLAUDE_PROFILE`: 백슬래시 이스케이프로 변수 평가를 **프롬프트 표시 시점까지 지연** (프로파일 변경 시 자동 반영)
-- `${BASE_PS1:-$PS1}`: 원본 프롬프트가 저장되어 있으면 사용, 없으면 현재 PS1 사용
-
-### 원본 프롬프트 저장
-
-```bash
-BASE_PS1="$PS1"
-```
-
-`.bashrc` 로드 시점의 원래 프롬프트를 저장한다. `claude-profile`을 여러 번 호출해도 프롬프트가 `(alice)(alice)(alice)...`처럼 중첩되는 것을 방지한다.
-
-### CLAUDE_CONFIG_DIR 자동 감지
-
-```bash
-if [ -n "$CLAUDE_CONFIG_DIR" ]; then
-    CLAUDE_PROFILE=$(basename $(dirname "$CLAUDE_CONFIG_DIR"))
-    echo "자동 감지된 Claude 프로파일: $CLAUDE_PROFILE"
-fi
-```
-
-- `-n "$CLAUDE_CONFIG_DIR"`: 변수가 비어있지 않으면 참
-- `.bashrc`가 로드되는 시점에 `CLAUDE_CONFIG_DIR`이 이미 설정되어 있으면 프로파일 이름을 자동 추출한다. 주로 방법 A의 `authorized_keys`의 `environment=` 옵션에 의해 설정되지만, 수동으로 `export`한 경우에도 동일하게 동작한다.
-- `dirname` + `basename`으로 경로에서 프로파일 이름을 추출:
-
-```
-CLAUDE_CONFIG_DIR=/home/meint0x/.claude-profiles/alice/.claude
-                                                 | dirname
-                  /home/meint0x/.claude-profiles/alice
-                                                 | basename
-                                                 alice
-```
